@@ -200,6 +200,11 @@ export default class Transvoxel {
 
         let v1Val = this.getByPos(grid, v1).value;
         let v2Val = this.getByPos(grid, v2).value;
+
+
+        let t = v1Val / (v1Val - v2Val);
+        return t;
+
         let vect = v2.substractPos(v1);
 
         let curlevel = level;
@@ -216,7 +221,7 @@ export default class Transvoxel {
             curlevel /= 2;
 
         }
-        return ((((v2Val - v1Val + 126) / 255) + shift) / level);
+        //return (((((v2Val + v1Val)) / 256) + 1 +shift) / level);
     }
 
     makeMesh(grid, pos = {x:0, y:0, z:0}, lod = 1, transitionCells = [1, 0, 0, 0, 0 ,0]) {

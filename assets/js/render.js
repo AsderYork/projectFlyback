@@ -5,14 +5,23 @@ import GRIDGENERATOR from '/assets/js/visuals/transvoxel/gridGenerator.js';
 //import {OrbitControls} from "https://threejs.org/examples/jsm/controls/OrbitControls.js";
 
 import CONTROL_FP from './visuals/firstPersonControls.js';
+import {
+    MathUtils,
+    Spherical,
+    Vector3
+} from '../../../node_modules/three/build/three.module.js';
 
-function makeBox(scene) {
+function makeBox(scene, position = null, scale = 1, color = 0x44aa88) {
 
-    const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-    const material = new THREE.MeshPhongMaterial({color: 0x44aa88, opacity:0.4});
+    const geometry = new THREE.BoxGeometry( 1 * scale, 1 * scale, 1 * scale);
+    const material = new THREE.MeshPhongMaterial({color: color, opacity:0.1});
     const cube = new THREE.Mesh(geometry, material);
+    if(position) {
+        cube.position.set(position.x, position.y, position.z);
+    }
 
     scene.add(cube);
+    return cube;
 
 }
 
@@ -21,26 +30,36 @@ function setObjectPos(object, x, y, z) {
     return object;
 }
 
+function Vec3() {
+    return new Vector3();
+}
+
+function visualizeGrid(scene, grid) {
+
+    var elems = [];
+    for(let x = 0; x < 3; x++) {
+        for(let y = 0; y < 3; y++) {
+            for(let z = 0; z < 3; z++) {
+                let colorIndex = grid[x][y][z].value < 0 ? 0xB39FC9 : 0x5AED64;
+                elems.push(makeBox(scene, new Vector3(x, y, z), 0.3, colorIndex/*(new THREE.Color(colorIndex, colorIndex, colorIndex)).getHex()*/));
+            }
+        }
+    }
+    return elems;
+
+}
+
 function populateChunks(scene, currAngle) {
     var NewObjects = [];
 
     for (let x = 0; x < 1; x++) {
         for (let y = 0; y < 1; y++) {
-            for (let z = 1; z < 2; z++) {
+            for (let z = 0; z < 1; z++) {
                 let transvoxel = new TRANSVOXEL();
-                let gridGen = new GRIDGENERATOR({x: 32, y: 32, z: 32});
-                transvoxel.makeMesh(gridGen.slope(0, new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0,1,0), THREE.MathUtils.degToRad(currAngle))).get(), {
-                    x: x * 32,
-                    y: y * 32,
-                    z: z * 32,
-                },  Math.pow(2, z));
-
-                /*transvoxel.makeMesh(gridGen.sine(5, 2, 0.5).get(), {
-                    x: x * 32,
-                    y: y * 32,
-                    z: z * 32,
-                },  Math.pow(2, z));*/
-
+                let gridGen = new GRIDGENERATOR({x: 3, y: 3, z: 3});
+                let nodes = gridGen.slope(0, new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0,1,0), THREE.MathUtils.degToRad(currAngle))).get();
+                transvoxel.makeMesh(nodes, Vec3().addScalar(32).multiply(Vec3().set(x, y, z)), Math.pow(2, z + 0));
+                NewObjects = NewObjects.concat(visualizeGrid(scene, nodes));
 
                 const chunk = renderChunk(transvoxel);
                 NewObjects.push(chunk);
@@ -93,7 +112,7 @@ function main() {
         }
 
         if(controls.isKeyPressed('BracketLeft') || controls.isKeyPressed('BracketRight')) {
-            currAngle += (controls.isKeyPressed('BracketRight') - controls.isKeyPressed('BracketLeft')) * time;
+            currAngle += (controls.isKeyPressed('BracketRight') - controls.isKeyPressed('BracketLeft')) * time * 16;
             if(currAngle > 360) {
                 currAngle =- 360;
             }
@@ -112,12 +131,9 @@ function main() {
 
         renderer.render(scene, camera);
 
-        //requestAnimationFrame(render);
     }
 
     renderer.setAnimationLoop(render);
-
-    //requestAnimationFrame(render);
 
 }
 
